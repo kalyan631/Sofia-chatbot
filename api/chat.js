@@ -5,16 +5,20 @@ export const config = {
 };
 
 export default async function handler(req) {
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Only POST allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" }
-    });
-  }
+  try {
+    // Only POST method allowed
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "Only POST allowed" }),
+        { status: 405, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
-  const { message, history = [] } = await req.json();
+    // Parse JSON body
+    const { message, history = [] } = await req.json();
 
-  const systemPrompt = `
+    // System prompt
+    const systemPrompt = `
 You are Sofia — a smart, confident, human-like assistant.
 Created by @Revenge_mode.
 
@@ -31,7 +35,7 @@ Rules:
 - Match user's mood and tone
 `;
 
-  try {
+    // Call OpenAI API
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -51,15 +55,16 @@ Rules:
 
     const data = await response.json();
 
-    return new Response(JSON.stringify({ reply: data.choices[0].message.content }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
+    // Return response
+    return new Response(
+      JSON.stringify({ reply: data.choices[0].message.content }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Something went wrong" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return new Response(
+      JSON.stringify({ error: "Something went wrong", details: err.message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 }
