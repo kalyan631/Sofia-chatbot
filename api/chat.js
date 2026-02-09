@@ -1,11 +1,15 @@
 import fetch from "node-fetch";
 
-export default async function handler(req, res) {
+export const config = {
+  runtime: "edge"
+};
+
+export default async function handler(req) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
+    return new Response(JSON.stringify({ error: "Only POST allowed" }), { status: 405 });
   }
 
-  const { message, history = [] } = req.body;
+  const { message, history = [] } = await req.json();
 
   const systemPrompt = `
 You are Sofia — a smart, confident, human-like assistant.
@@ -44,11 +48,14 @@ Rules:
 
     const data = await response.json();
 
-    res.status(200).json({
-      reply: data.choices[0].message.content
+    return new Response(JSON.stringify({ reply: data.choices[0].message.content }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
     });
-
   } catch (err) {
-    res.status(500).json({ error: "Something went wrong" });
+    return new Response(JSON.stringify({ error: "Something went wrong" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
